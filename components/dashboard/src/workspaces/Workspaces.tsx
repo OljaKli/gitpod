@@ -57,7 +57,6 @@ export default function () {
             }
         })();
     }, [teams]);
-    console.log("Is experiment enabled? ", isExperimentEnabled);
 
     return (
         <>
