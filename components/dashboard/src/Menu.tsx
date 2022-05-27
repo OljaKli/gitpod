@@ -27,6 +27,7 @@ import { getProjectSettingsMenu } from "./projects/ProjectSettings";
 import { ProjectContext } from "./projects/project-context";
 import { PaymentContext } from "./payment-context";
 import FeedbackFormModal from "./feedback-form/FeedbackModal";
+import { getExperimentsClient } from "./experiments/client";
 
 interface Entry {
     title: string;
@@ -39,8 +40,15 @@ export default function Menu() {
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
-    const { showPaymentUI, setShowPaymentUI, setCurrency, setIsStudent, setIsChargebeeCustomer } =
-        useContext(PaymentContext);
+    const {
+        showPaymentUI,
+        setShowPaymentUI,
+        showUsageBasedUI,
+        setShowUsageBasedUI,
+        setCurrency,
+        setIsStudent,
+        setIsChargebeeCustomer,
+    } = useContext(PaymentContext);
     const { project, setProject } = useContext(ProjectContext);
     const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
 
@@ -143,6 +151,12 @@ export default function Menu() {
         const { server } = getGitpodService();
         Promise.all([
             server.getShowPaymentUI().then((v) => () => setShowPaymentUI(v)),
+            getExperimentsClient()
+                .getValueAsync("isUsageBasedUIEnabled", false, {
+                    userID: user?.id,
+                    teamID: team?.id,
+                })
+                .then((v) => () => setShowUsageBasedUI(v)),
             server.getClientRegion().then((v) => () => {
                 // @ts-ignore
                 setCurrency(countries[v]?.currency === "EUR" ? "EUR" : "USD");
@@ -211,7 +225,7 @@ export default function Menu() {
             {
                 title: "Settings",
                 link: "/settings",
-                alternatives: getSettingsMenu({ showPaymentUI }).flatMap((e) => e.link),
+                alternatives: getSettingsMenu({ showPaymentUI, showUsageBasedUI }).flatMap((e) => e.link),
             },
         ];
     })();
